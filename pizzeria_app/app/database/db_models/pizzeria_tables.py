@@ -4,7 +4,7 @@ import sqlalchemy.dialects.postgresql as pg
 from sqlalchemy import VARCHAR, Boolean, Column, ForeignKey, Integer, func, Text, DateTime
 from sqlalchemy.orm import relationship, DeclarativeBase
 
-# какие колонки будут индексироваться???????????????????????????????????
+
 class Base(DeclarativeBase):
     pass
 
@@ -19,7 +19,7 @@ class Customer(Base):
     )
     name = Column(VARCHAR(128), nullable=False)
     address = Column(Text, nullable=False, default="pickup")
-    phone = Column(VARCHAR(32), nullable=False)
+    phone = Column(VARCHAR(32), nullable=False, unique=True, index=True)
     created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now())
     updated_at = Column(DateTime(timezone=True),
                         default=func.now(),
@@ -28,7 +28,7 @@ class Customer(Base):
                         server_onupdate=func.now()
                         )
 
-    orders = relationship("Orders", back_populates="customer", uselist=True)  # ???????????????????????????????
+    orders = relationship("Orders", back_populates="customer", uselist=True)
 
 
 class Orders(Base):
@@ -39,7 +39,7 @@ class Orders(Base):
         default=uuid.uuid4,
         server_default=func.uuid_generate_v4(),
     )
-    customer_id = Column(pg.UUID(True), ForeignKey("customers.id"))
+    customer_id = Column(pg.UUID(True), ForeignKey("customers.id"), index=True)
     total_price = Column(Integer)
     status = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now())
@@ -50,8 +50,8 @@ class Orders(Base):
                         server_onupdate=func.now()
                         )
 
-    customer = relationship("Customers", back_populates="orders")  # ??????????????????????????????????
-    order_details = relationship("OrderDetails", back_populates="orders")  # ??????????????????????????????????
+    customer = relationship("Customers", back_populates="orders")
+    order_details = relationship("OrderDetails", back_populates="orders")
 
 
 class OrderDetails(Base):
@@ -62,7 +62,7 @@ class OrderDetails(Base):
     unit_price = Column(Integer)
 
     order = relationship("Orders", back_populates="order_details")
-    products = relationship("Products", back_populates="order_details")  # ??????????????????????????????????
+    products = relationship("Products", back_populates="order_details")
 
 
 class Products(Base):
@@ -73,7 +73,7 @@ class Products(Base):
         default=uuid.uuid4,
         server_default=func.uuid_generate_v4()
     )
-    name = Column(VARCHAR(128), nullable=False, unique=True)
+    name = Column(VARCHAR(128), nullable=False, unique=True, index=True)
     description = Column(Text)
     price = Column(Integer, nullable=False)
     units_in_stock = Column(Integer, nullable=False, default=0)
@@ -85,7 +85,7 @@ class Products(Base):
                         server_onupdate=func.now()
                         )
 
-    products_positions = relationship("ProductsPositions", back_populates="products", uselist=True)  # ????????
+    # products_positions = relationship("ProductsPositions", back_populates="products", uselist=True)
 
 
 class Positions(Base):
@@ -96,7 +96,7 @@ class Positions(Base):
         default=uuid.uuid4,
         server_default=func.uuid_generate_v4()
     )
-    name = Column(VARCHAR(128), nullable=False, unique=True)
+    name = Column(VARCHAR(128), nullable=False, unique=True, index=True)
     type = Column(VARCHAR(128), nullable=False)
     quantity = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now())
@@ -107,17 +107,16 @@ class Positions(Base):
                         server_onupdate=func.now()
                         )
 
-    products_positions = relationship("ProductsPositions", back_populates="positions", uselist=True)  # ???????
+    # products_positions = relationship("ProductsPositions", back_populates="positions", uselist=True)
 
 
-# Не понимаю каким образом ингредиенты будут добавляться к конкретному продукту
 class ProductsPositions(Base):
     __tablename__ = "products_positions"
     product_id = Column(pg.UUID(True), ForeignKey("products.id"), primary_key=True)
-    position_id = Column(pg.UUID(True), ForeignKey("positions.id"))
+    position_id = Column(pg.UUID(True), ForeignKey("positions.id"), primary_key=True)
 
-    products = relationship("Products", back_populates="products_positions", uselist=True)  # ?????????????????
-    positions = relationship("Positions", back_populates="products_positions", uselist=True)  # ???????????????
+    # products = relationship("Products", back_populates="products_positions", uselist=True)
+    # positions = relationship("Positions", back_populates="products_positions", uselist=True)
 
 
 class Authorization(Base):
