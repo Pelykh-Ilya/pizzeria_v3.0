@@ -4,7 +4,7 @@ import sqlalchemy.dialects.postgresql as pg
 from sqlalchemy import VARCHAR, Boolean, Column, ForeignKey, Integer, func, Text, DateTime
 from sqlalchemy.orm import relationship, DeclarativeBase
 
-
+# какие колонки будут индексироваться???????????????????????????????????
 class Base(DeclarativeBase):
     pass
 
@@ -56,7 +56,7 @@ class Orders(Base):
 
 class OrderDetails(Base):
     __tablename__ = "order_details"
-    order_id = Column(pg.UUID(True), ForeignKey("orders.id"))
+    order_id = Column(pg.UUID(True), ForeignKey("orders.id"), primary_key=True,)
     product_id = Column(pg.UUID(True), ForeignKey("products.id"))
     quantity = Column(Integer)
     unit_price = Column(Integer)
@@ -73,7 +73,7 @@ class Products(Base):
         default=uuid.uuid4,
         server_default=func.uuid_generate_v4()
     )
-    name = Column(VARCHAR(128), nullable=False)
+    name = Column(VARCHAR(128), nullable=False, unique=True)
     description = Column(Text)
     price = Column(Integer, nullable=False)
     units_in_stock = Column(Integer, nullable=False, default=0)
@@ -113,7 +113,7 @@ class Positions(Base):
 # Не понимаю каким образом ингредиенты будут добавляться к конкретному продукту
 class ProductsPositions(Base):
     __tablename__ = "products_positions"
-    product_id = Column(pg.UUID(True), ForeignKey("products.id"))
+    product_id = Column(pg.UUID(True), ForeignKey("products.id"), primary_key=True)
     position_id = Column(pg.UUID(True), ForeignKey("positions.id"))
 
     products = relationship("Products", back_populates="products_positions", uselist=True)  # ?????????????????
