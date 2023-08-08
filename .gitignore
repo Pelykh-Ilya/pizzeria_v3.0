@@ -1,0 +1,25 @@
+### Python ###
+.venv
+.venv.bak
+__pycache__
+*.py[cod]
+dist
+data
+.idea/
+
+
+### Tests ###
+report.xml
+coverage.xml
+.coverage
+.pytest_cache
+
+
+### Application specific ###
+.env
+*.log
+pizzeria_app/app/meta.py
+
+
+### Docker ###
+docker/data

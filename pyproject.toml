@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "pizzerria v3-0"
+version = "0.1.0"
+description = ""
+authors = ["Pelykh-Ilya <pelykh.ilya@gmail.com>"]
+readme = "README.md"
+packages = [{include = "pizzerria v3"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.101.0"
+sqlalchemy = "^2.0.19"
+uvicorn = "^0.23.2"
+asyncpg = "^0.28.0"
+pydantic-settings = "^2.0.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
