@@ -4,10 +4,10 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class Authorization(BaseModel):
+class AuthorizationSchema(BaseModel):
     id: UUID
     username: str
     password: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True

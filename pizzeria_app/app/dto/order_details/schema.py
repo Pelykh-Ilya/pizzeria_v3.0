@@ -10,4 +10,4 @@ class OrderDetails(BaseModel):
     unit_price: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True

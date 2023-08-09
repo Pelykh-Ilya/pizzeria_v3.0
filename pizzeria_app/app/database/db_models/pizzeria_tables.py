@@ -9,7 +9,7 @@ class Base(DeclarativeBase):
     pass
 
 
-class Customer(Base):
+class Customers(Base):
     __tablename__ = "customers"
     id = Column(
         pg.UUID(True),
@@ -61,7 +61,7 @@ class OrderDetails(Base):
     quantity = Column(Integer)
     unit_price = Column(Integer)
 
-    order = relationship("Orders", back_populates="order_details")
+    orders = relationship("Orders", back_populates="order_details")
     products = relationship("Products", back_populates="order_details")
 
 
@@ -85,7 +85,7 @@ class Products(Base):
                         onupdate=func.now(),
                         server_onupdate=func.now()
                         )
-
+    order_details = relationship("OrderDetails", back_populates="products")
     # products_positions = relationship("ProductsPositions", back_populates="products", uselist=True)
 
 
