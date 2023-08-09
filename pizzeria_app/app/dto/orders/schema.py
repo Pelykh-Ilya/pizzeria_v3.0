@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 
 class Orders(BaseModel):
-
     id: UUID
     customer_id: Optional[UUID]
     total_price: int

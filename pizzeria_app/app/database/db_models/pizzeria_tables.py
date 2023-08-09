@@ -77,6 +77,7 @@ class Products(Base):
     description = Column(Text)
     price = Column(Integer, nullable=False)
     units_in_stock = Column(Integer, nullable=False, default=0)
+    on_stop_list = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now())
     updated_at = Column(DateTime(timezone=True),
                         default=func.now(),

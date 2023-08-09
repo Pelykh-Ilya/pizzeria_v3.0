@@ -7,5 +7,20 @@ customers_router = APIRouter(prefix="/customers", tags=["Customers"])
 
 
 @customers_router.post("/")
-def create_customer():
-    return {"response": "customer created"}
+async def create_new_customer():
+    pass
+
+
+@customers_router.put("/{customer_phone}")
+async def edit_customer():
+    pass
+
+
+@customers_router.get("/{customer_phone}")
+async def get_customer():
+    pass
+
+
+@customers_router.get("/")
+async def get_customers():
+    pass

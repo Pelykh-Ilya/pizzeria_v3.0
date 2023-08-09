@@ -9,7 +9,8 @@ class Products(BaseModel):
     name: str
     description: str
     price: int
-    units_in_stock: datetime
+    units_in_stock: int
+    on_stop_list: bool
     created_at: datetime
     updated_at: datetime
 
