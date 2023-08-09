@@ -9,7 +9,7 @@ class Base(DeclarativeBase):
     pass
 
 
-class Customers(Base):
+class CustomersModel(Base):
     __tablename__ = "customers"
     id = Column(
         pg.UUID(True),
@@ -28,10 +28,10 @@ class Customers(Base):
                         server_onupdate=func.now()
                         )
 
-    orders = relationship("Orders", back_populates="customer", uselist=True)
+    orders = relationship("OrdersModel", back_populates="customer", uselist=True)
 
 
-class Orders(Base):
+class OrdersModel(Base):
     __tablename__ = "orders"
     id = Column(
         pg.UUID(True),
@@ -50,22 +50,22 @@ class Orders(Base):
                         server_onupdate=func.now()
                         )
 
-    customer = relationship("Customers", back_populates="orders")
-    order_details = relationship("OrderDetails", back_populates="orders")
+    customer = relationship("CustomersModel", back_populates="orders")
+    order_details = relationship("OrderDetailsModel", back_populates="orders")
 
 
-class OrderDetails(Base):
+class OrderDetailsModel(Base):
     __tablename__ = "order_details"
     order_id = Column(pg.UUID(True), ForeignKey("orders.id"), primary_key=True,)
     product_id = Column(pg.UUID(True), ForeignKey("products.id"))
     quantity = Column(Integer)
     unit_price = Column(Integer)
 
-    orders = relationship("Orders", back_populates="order_details")
-    products = relationship("Products", back_populates="order_details")
+    orders = relationship("OrdersModel", back_populates="order_details")
+    products = relationship("ProductsModel", back_populates="order_details")
 
 
-class Products(Base):
+class ProductsModel(Base):
     __tablename__ = "products"
     id = Column(
         pg.UUID(True),
@@ -85,11 +85,11 @@ class Products(Base):
                         onupdate=func.now(),
                         server_onupdate=func.now()
                         )
-    order_details = relationship("OrderDetails", back_populates="products")
-    # products_positions = relationship("ProductsPositions", back_populates="products", uselist=True)
+    order_details = relationship("OrderDetailsModel", back_populates="products")
+    # products_positions = relationship("ProductsPositionsModel", back_populates="products", uselist=True)
 
 
-class Positions(Base):
+class PositionsModel(Base):
     __tablename__ = "positions"
     id = Column(
         pg.UUID(True),
@@ -108,19 +108,19 @@ class Positions(Base):
                         server_onupdate=func.now()
                         )
 
-    # products_positions = relationship("ProductsPositions", back_populates="positions", uselist=True)
+    # products_positions = relationship("ProductsPositionsModel", back_populates="positions", uselist=True)
 
 
-class ProductsPositions(Base):
+class ProductsPositionsModel(Base):
     __tablename__ = "products_positions"
     product_id = Column(pg.UUID(True), ForeignKey("products.id"), primary_key=True)
     position_id = Column(pg.UUID(True), ForeignKey("positions.id"), primary_key=True)
 
-    # products = relationship("Products", back_populates="products_positions", uselist=True)
-    # positions = relationship("Positions", back_populates="products_positions", uselist=True)
+    # products = relationship("ProductsModel", back_populates="products_positions", uselist=True)
+    # positions = relationship("PositionsModel", back_populates="products_positions", uselist=True)
 
 
-class Authorization(Base):
+class AuthorizationModel(Base):
     __tablename__ = "authorization"
     id = Column(
         pg.UUID(True),
