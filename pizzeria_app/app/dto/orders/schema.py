@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class Orders(BaseModel):
+class OrdersSchema(BaseModel):
     id: UUID
     customer_id: Optional[UUID]
     total_price: int

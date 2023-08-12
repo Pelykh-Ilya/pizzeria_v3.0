@@ -27,6 +27,7 @@ class CustomersModel(Base):
                         onupdate=func.now(),
                         server_onupdate=func.now()
                         )
+    is_active = Column(Boolean, default=True)
 
     orders = relationship("OrdersModel", back_populates="customer", uselist=True)
 
@@ -85,6 +86,7 @@ class ProductsModel(Base):
                         onupdate=func.now(),
                         server_onupdate=func.now()
                         )
+    is_active = Column(Boolean, default=True)
     order_details = relationship("OrderDetailsModel", back_populates="products")
     # products_positions = relationship("ProductsPositionsModel", back_populates="products", uselist=True)
 
@@ -107,6 +109,7 @@ class PositionsModel(Base):
                         onupdate=func.now(),
                         server_onupdate=func.now()
                         )
+    is_active = Column(Boolean, default=True)
 
     # products_positions = relationship("ProductsPositionsModel", back_populates="positions", uselist=True)
 

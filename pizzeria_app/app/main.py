@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 
-from pizzeria_app.app.database.connections import create_database
-from pizzeria_app.app.dto.config import generate_config
-from pizzeria_app.app.routes.api import api_router
+from app.database.connections import create_database
+from app.dto.config import generate_config
+from app.routes.api import api_router
 
 
 def create_app() -> FastAPI:

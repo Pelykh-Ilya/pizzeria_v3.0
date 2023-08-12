@@ -3,7 +3,7 @@ from typing import Type
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine, async_sessionmaker
 
-from pizzeria_app.app.dto.config import PostgresConfig
+from app.dto.config import PostgresConfig
 
 
 @dataclass

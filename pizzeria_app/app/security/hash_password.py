@@ -1,6 +1,10 @@
+import logging
+
 import bcrypt
 from fastapi import HTTPException
 from starlette import status
+
+logger = logging.getLogger(__name__)
 
 
 def hash_password(password: str) -> str:
@@ -13,6 +17,7 @@ def check_password(password: str, hashed_password: str) -> bool:
     if result:
         return result
     else:
+        logger.exception("Incorrect password")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect password"

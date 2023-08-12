@@ -1,3 +1,5 @@
+
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings
 
 
@@ -13,6 +15,8 @@ class PostgresConfig(BaseSettings):
 
 class APPConfig(BaseSettings):
     postgres: PostgresConfig
+    secret_key: SecretStr = SecretStr("secret_key")
+    token_lifetime: int = 3600
 
     class Config:
         env_prefix = "APPLICATION_"
