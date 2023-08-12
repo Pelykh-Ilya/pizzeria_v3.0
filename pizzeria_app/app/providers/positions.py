@@ -38,15 +38,10 @@ async def get_filter_positions(
         PositionsModel.is_active == is_active, PositionsModel.quantity > 0
     )
     if name:
-        positions_query = select(PositionsModel).where(
-            PositionsModel.name.ilike(f"{name}%"),
-            PositionsModel.is_active == is_active,
-            PositionsModel.quantity > 0
-        )  # ILIKE
+        positions_query = positions_query.where(PositionsModel.name.ilike(f"{name}%"))
+
     if type:
-        positions_query = select(PositionsModel).where(
-            PositionsModel.type == type, PositionsModel.is_active == is_active, PositionsModel.quantity > 0
-        )
+        positions_query = positions_query.where(PositionsModel.type == type)
     if allow_zero_count:
         positions_query = select(PositionsModel).where(
             PositionsModel.quantity >= 0, PositionsModel.is_active == is_active
