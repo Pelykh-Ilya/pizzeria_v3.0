@@ -8,14 +8,13 @@ from starlette import status
 
 from app.database.db_models.pizzeria_tables import PositionsModel
 from app.dto.positions.payload import PositionTypeEnum
-from app.providers.database import get_async_session
 
 logger = logging.getLogger(__name__)
 
 
 async def get_position_by_id(
         position_id: UUID,
-        db: AsyncSession = Depends(get_async_session)
+        db: AsyncSession
 ) -> PositionsModel:
     position_query = await db.execute(select(PositionsModel).where(PositionsModel.id == position_id))
     if position := position_query.scalar():

@@ -3,12 +3,11 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.controllers.positions import edit_position_info
 from app.database.db_models.pizzeria_tables import PositionsModel
-from app.dto.positions.payload import NewPositionPayload, PositionTypeEnum, EditPositionPayload, GetPositionPayload
+from app.dto.positions.payload import NewPositionPayload, PositionTypeEnum, EditPositionPayload
 from app.dto.positions.schema import PositionsSchema
 from app.providers.database import get_async_session
 from app.providers.positions import get_position_by_id, get_filter_positions
@@ -30,7 +29,7 @@ async def create_new_position(
     return position
 
 
-@positions_router.get("/search", response_model=List[PositionsSchema])  # , dependencies=[Depends(check_token)]
+@positions_router.get("/search", response_model=List[PositionsSchema], dependencies=[Depends(check_token)])
 async def get_all_positions(
     name: str | None = None,
     type: PositionTypeEnum | None = None,
