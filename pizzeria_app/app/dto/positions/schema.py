@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-class PositionsSchema(BaseModel):
+class PositionSchema(BaseModel):
     id: UUID
     name: str
     type: str
