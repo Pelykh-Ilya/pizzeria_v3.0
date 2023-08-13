@@ -10,7 +10,7 @@ from app.database.db_models.pizzeria_tables import PositionsModel
 from app.dto.positions.payload import NewPositionPayload, PositionTypeEnum, EditPositionPayload
 from app.dto.positions.schema import PositionsSchema
 from app.providers.database import get_async_session
-from app.providers.positions import get_position_by_id, get_filter_positions
+from app.providers.positions import get_position_by_id, get_filter_positions, check_for_position_duplicate
 from app.security.jwt_token import check_token
 
 logger = logging.getLogger(__name__)
@@ -22,6 +22,7 @@ async def create_new_position(
         payload: NewPositionPayload,
         db: AsyncSession = Depends(get_async_session)
 ):
+    await check_for_position_duplicate(position_name=payload.name, db=db)
     position = PositionsModel(name=payload.name, type=payload.type)
     db.add(position)
     await db.commit()
@@ -52,6 +53,7 @@ async def edit_position(
         position: PositionsModel = Depends(get_position_by_id),
         db: AsyncSession = Depends(get_async_session)
 ):
+    await check_for_position_duplicate(position_name=payload.name, db=db)
     return await edit_position_info(db=db, position=position, edit_position=payload)
 
 
