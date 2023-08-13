@@ -19,5 +19,5 @@ class NewPositionPayload(BaseModel):
 
 
 class EditPositionPayload(BaseModel):
-    name: str = Field(..., min_length=1, max_length=128)
-    is_active: bool
+    name: str = Field(None, min_length=1, max_length=128)
+    is_active: bool | None

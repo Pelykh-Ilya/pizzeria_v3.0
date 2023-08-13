@@ -11,6 +11,7 @@ class CustomerSchema(BaseModel):
     phone: str
     created_at: datetime
     updated_at: datetime
+    is_active: bool
 
     class Config:
         from_attributes = True

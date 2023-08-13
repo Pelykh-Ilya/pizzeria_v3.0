@@ -1,17 +1,17 @@
 import logging
 from typing import List
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.controllers.positions import edit_position_info
+from app.controllers.positions import edit_position_info, get_filtered_positions
 from app.database.db_models.pizzeria_tables import PositionsModel
 from app.dto.positions.payload import NewPositionPayload, PositionTypeEnum, EditPositionPayload
 from app.dto.positions.schema import PositionsSchema
 from app.providers.database import get_async_session
-from app.providers.positions import get_position_by_id, get_filter_positions, check_for_position_duplicate
+from app.providers.positions import get_position_by_id
 from app.security.jwt_token import check_token
+from app.services.positions import check_for_position_duplicate
 
 logger = logging.getLogger(__name__)
 positions_router = APIRouter(prefix="/positions", tags=["Positions"])
@@ -27,6 +27,7 @@ async def create_new_position(
     db.add(position)
     await db.commit()
     await db.refresh(position)
+    logger.debug("Position with name %s created", payload.name)
     return position
 
 
@@ -36,14 +37,14 @@ async def get_all_positions(
     type: PositionTypeEnum | None = None,
     is_active: bool = True,
     allow_zero_count: bool = False,
-    db: AsyncSession = Depends(get_async_session)
+    db: AsyncSession = Depends(get_async_session),
 ):
-    return await get_filter_positions(
+    return await get_filtered_positions(
         name=name,
         type=type,
         is_active=is_active,
         allow_zero_count=allow_zero_count,
-        db=db
+        db=db,
     )
 
 
@@ -51,15 +52,12 @@ async def get_all_positions(
 async def edit_position(
         payload: EditPositionPayload,
         position: PositionsModel = Depends(get_position_by_id),
-        db: AsyncSession = Depends(get_async_session)
+        db: AsyncSession = Depends(get_async_session),
 ):
     await check_for_position_duplicate(position_name=payload.name, db=db)
     return await edit_position_info(db=db, position=position, edit_position=payload)
 
 
 @positions_router.get("/{position_id}", dependencies=[Depends(check_token)], response_model=PositionsSchema)
-async def get_position(
-        position_id: UUID = Path(...),
-        db: AsyncSession = Depends(get_async_session)
-):
-    return await get_position_by_id(position_id=position_id, db=db)
+async def get_position(position: PositionsModel = Depends(get_position_by_id)):
+    return position

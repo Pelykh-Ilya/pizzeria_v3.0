@@ -22,45 +22,8 @@ async def get_position_by_id(
     )
     if position := position_query.scalar():
         return position
-    logger.exception(f"Position with id {position_id} not found")
+    logger.warning(f"Position with id {position_id} not found")
     raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
+        status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Position with id {position_id} not found"
     )
-
-
-async def check_for_position_duplicate(
-        position_name: str,
-        db: AsyncSession
-):
-    position_query = await db.execute(
-        select(PositionsModel).where(PositionsModel.name == position_name)
-    )
-    position = position_query.scalar()
-    if position:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Position {position_name} is already exist"
-        )
-
-
-async def get_filter_positions(
-        db: AsyncSession,
-        name: str,
-        type: PositionTypeEnum,
-        is_active: bool,
-        allow_zero_count: bool
-):
-    positions_query = select(PositionsModel).where(
-        PositionsModel.is_active == is_active
-    )
-    if name:
-        positions_query = positions_query.where(PositionsModel.name.ilike(f"{name}%"))
-    if type:
-        positions_query = positions_query.where(PositionsModel.type == type)
-    if not allow_zero_count:
-        positions_query = positions_query.where(PositionsModel.quantity > 0)
-
-    logger.info(positions_query)
-    positions = await db.execute(positions_query)
-    return positions.scalars().all()

@@ -13,6 +13,7 @@ class Products(BaseModel):
     on_stop_list: bool
     created_at: datetime
     updated_at: datetime
-
+    is_active: bool
+    
     class Config:
         from_attributes = True

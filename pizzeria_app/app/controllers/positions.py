@@ -1,11 +1,8 @@
-import logging
-
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db_models.pizzeria_tables import PositionsModel
-from app.dto.positions.payload import EditPositionPayload
-
-logger = logging.getLogger(__name__)
+from app.dto.positions.payload import EditPositionPayload, PositionTypeEnum
 
 
 async def edit_position_info(
@@ -21,9 +18,24 @@ async def edit_position_info(
     if is_updated:
         await db.commit()
         await db.refresh(position)
-        logger.info(f"Position info with id {position.id} updated")
-    else:
-        logger.info(f"Position info with id {position.id} without changes")
     return position
 
 
+async def get_filtered_positions(
+        db: AsyncSession,
+        name: str,
+        type: PositionTypeEnum,
+        is_active: bool,
+        allow_zero_count: bool
+):
+    positions_query = select(PositionsModel).where(
+        PositionsModel.is_active == is_active
+    )
+    if name:
+        positions_query = positions_query.where(PositionsModel.name.ilike(f"{name}%"))
+    if type:
+        positions_query = positions_query.where(PositionsModel.type == type)
+    if not allow_zero_count:
+        positions_query = positions_query.where(PositionsModel.quantity > 0)
+    positions = await db.execute(positions_query)
+    return positions.scalars().all()
