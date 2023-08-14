@@ -6,7 +6,7 @@ from starlette import status
 from app.database.db_models.pizzeria_tables import PositionsModel
 
 
-async def check_for_position_duplicate(
+async def check_for_exists_position_by_name(
         position_name: str,
         db: AsyncSession,
 ):

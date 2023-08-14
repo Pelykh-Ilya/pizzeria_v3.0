@@ -14,31 +14,32 @@ async def check_exists_positions(
         db: AsyncSession,
 ):
     position_ids = [position.position_id for position in positions]
-    position_stmt = select(func.count(PositionsModel.id)).where(PositionsModel.id.in_(position_ids))
-    exists_positions = await db.scalar(position_stmt)
-    # получать id и выводить недостающие позиции дописать!
-    if len(position_ids) != exists_positions:
+    position_stmt = select(PositionsModel.id).where(PositionsModel.id.in_(position_ids))
+    exists_positions = await db.scalars(position_stmt)
+    exist_positions_result = exists_positions.all()
+    if len(position_ids) != len(exist_positions_result):
+        difference_position = set(position_ids) - set(exist_positions_result)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Some position not represented in db"
+            detail=f"Position {difference_position} not represented in db"
         )
 
 
-async def check_for_exists_good_by_name(
+async def check_for_exists_product_by_name(
         product_name: str,
-        db: AsyncSession
+        db: AsyncSession,
 ):
     query = select(ProductsModel).where(ProductsModel.name == product_name)
     if await db.scalar(query):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Product name already exists"
+            detail="Product name already exists",
         )
 
 
 async def check_new_product_properties(
         new_product_payload: NewProductPayload,
-        db: AsyncSession
+        db: AsyncSession,
 ):
-    await check_for_exists_good_by_name(db=db, product_name=new_product_payload.name)
+    await check_for_exists_product_by_name(db=db, product_name=new_product_payload.name)
     await check_exists_positions(db=db, positions=new_product_payload.related_positions)

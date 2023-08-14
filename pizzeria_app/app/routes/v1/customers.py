@@ -11,7 +11,7 @@ from app.dto.customers.schema import CustomerSchema
 from app.providers.customers import get_customer_by_id
 from app.providers.database import get_async_session
 from app.security.jwt_token import check_token
-from app.services.customers import check_customers_duplicate
+from app.services.customers import check_for_exists_customer_by_name
 
 logger = logging.getLogger(__name__)
 customers_router = APIRouter(prefix="/customers", tags=["Customers"])
@@ -22,7 +22,7 @@ async def create_new_customer(
         payload: NewCustomerPayload,
         db: AsyncSession = Depends(get_async_session),
 ):
-    await check_customers_duplicate(customer_phone=payload.phone, db=db)
+    await check_for_exists_customer_by_name(customer_phone=payload.phone, db=db)
     customer = CustomersModel(name=payload.name, address=payload.address, phone=payload.phone)
     db.add(customer)
     await db.commit()
@@ -58,7 +58,7 @@ async def edit_customer(
         customer: CustomersModel = Depends(get_customer_by_id),
         db: AsyncSession = Depends(get_async_session),
 ):
-    await check_customers_duplicate(customer_phone=payload.phone, db=db)
+    await check_for_exists_customer_by_name(customer_phone=payload.phone, db=db)
     return await edit_customer_info(customer=customer, edit_customer=payload, db=db)
 
 

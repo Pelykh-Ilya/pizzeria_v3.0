@@ -25,7 +25,7 @@ class CustomersModel(Base):
                         default=func.now(),
                         server_default=func.now(),
                         onupdate=func.now(),
-                        server_onupdate=func.now()
+                        server_onupdate=func.now(),
                         )
     is_active = Column(Boolean, default=True)
 
@@ -48,7 +48,7 @@ class OrdersModel(Base):
                         default=func.now(),
                         server_default=func.now(),
                         onupdate=func.now(),
-                        server_onupdate=func.now()
+                        server_onupdate=func.now(),
                         )
 
     customer = relationship("CustomersModel", back_populates="orders")
@@ -72,7 +72,7 @@ class ProductsModel(Base):
         pg.UUID(True),
         primary_key=True,
         default=uuid.uuid4,
-        server_default=func.uuid_generate_v4()
+        server_default=func.uuid_generate_v4(),
     )
     name = Column(VARCHAR(128), nullable=False, unique=True, index=True)
     description = Column(Text)
@@ -83,7 +83,7 @@ class ProductsModel(Base):
                         default=func.now(),
                         server_default=func.now(),
                         onupdate=func.now(),
-                        server_onupdate=func.now()
+                        server_onupdate=func.now(),
                         )
     is_active = Column(Boolean, default=True)
     order_details = relationship("OrderDetailsModel", back_populates="products")
@@ -95,17 +95,18 @@ class PositionsModel(Base):
         pg.UUID(True),
         primary_key=True,
         default=uuid.uuid4,
-        server_default=func.uuid_generate_v4()
+        server_default=func.uuid_generate_v4(),
     )
     name = Column(VARCHAR(128), nullable=False, unique=True, index=True)
     type = Column(VARCHAR(128), nullable=False)
     quantity = Column(Integer, nullable=False, default=0)
+    unit_of_measurement = Column(VARCHAR(30), nullable=False)
     created_at = Column(DateTime(timezone=True), default=func.now(), server_default=func.now())
     updated_at = Column(DateTime(timezone=True),
                         default=func.now(),
                         server_default=func.now(),
                         onupdate=func.now(),
-                        server_onupdate=func.now()
+                        server_onupdate=func.now(),
                         )
     is_active = Column(Boolean, default=True)
 
@@ -123,7 +124,7 @@ class AuthorizationModel(Base):
         pg.UUID(True),
         primary_key=True,
         default=uuid.uuid4,
-        server_default=func.uuid_generate_v4()
+        server_default=func.uuid_generate_v4(),
     )
     username = Column(VARCHAR(256), nullable=False)
     password = Column(VARCHAR(256), nullable=False)

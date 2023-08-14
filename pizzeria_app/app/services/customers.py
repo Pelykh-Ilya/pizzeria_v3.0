@@ -6,7 +6,7 @@ from starlette import status
 from app.database.db_models.pizzeria_tables import CustomersModel
 
 
-async def check_customers_duplicate(
+async def check_for_exists_customer_by_name(
         customer_phone: str,
         db: AsyncSession,
 ):

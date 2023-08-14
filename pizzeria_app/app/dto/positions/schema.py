@@ -9,6 +9,7 @@ class PositionSchema(BaseModel):
     name: str
     type: str
     quantity: int
+    unit_of_measurement: str
     created_at: datetime
     updated_at: datetime
     is_active: bool

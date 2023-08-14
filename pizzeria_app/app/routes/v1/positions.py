@@ -11,7 +11,7 @@ from app.dto.positions.schema import PositionSchema
 from app.providers.database import get_async_session
 from app.providers.positions import get_position_by_id
 from app.security.jwt_token import check_token
-from app.services.positions import check_for_position_duplicate
+from app.services.positions import check_for_exists_position_by_name
 
 logger = logging.getLogger(__name__)
 positions_router = APIRouter(prefix="/positions", tags=["Positions"])
@@ -22,8 +22,8 @@ async def create_new_position(
         payload: NewPositionPayload,
         db: AsyncSession = Depends(get_async_session)
 ):
-    await check_for_position_duplicate(position_name=payload.name, db=db)
-    position = PositionsModel(name=payload.name, type=payload.type)
+    await check_for_exists_position_by_name(position_name=payload.name, db=db)
+    position = PositionsModel(name=payload.name, type=payload.type, unit_of_measurement=payload.unit_of_measurement)
     db.add(position)
     await db.commit()
     await db.refresh(position)
@@ -54,7 +54,7 @@ async def edit_position(
         position: PositionsModel = Depends(get_position_by_id),
         db: AsyncSession = Depends(get_async_session),
 ):
-    await check_for_position_duplicate(position_name=payload.name, db=db)
+    await check_for_exists_position_by_name(position_name=payload.name, db=db)
     return await edit_position_info(db=db, position=position, edit_position=payload)
 
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 from uuid import UUID
 
 from decimal import Decimal
@@ -17,3 +18,14 @@ class ProductSchema(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class RelatedPosition(BaseModel):
+    id: UUID
+    name: str
+    type: str
+    quantity_for_product: int
+
+
+class ProductWithRelationSchema(ProductSchema):
+    related_positions: List[RelatedPosition]

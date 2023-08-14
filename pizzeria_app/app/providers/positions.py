@@ -22,7 +22,7 @@ async def get_position_by_id(
     )
     if position := position_query.scalar():
         return position
-    logger.warning(f"Position with id {position_id} not found")
+    logger.warning("Position with id %s not found", position_id)
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Position with id {position_id} not found"

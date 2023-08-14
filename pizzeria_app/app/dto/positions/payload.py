@@ -13,9 +13,16 @@ class PositionTypeEnum(str, Enum):
     OTHER = "other"
 
 
+class PositionUnitEnum(str, Enum):
+    ML = "ml"
+    GRAM = "gram"
+    Piece = "piece"
+
+
 class NewPositionPayload(BaseModel):
     name: str = Field(..., min_length=1, max_length=128)
     type: PositionTypeEnum
+    unit_of_measurement: PositionUnitEnum
 
 
 class EditPositionPayload(BaseModel):
