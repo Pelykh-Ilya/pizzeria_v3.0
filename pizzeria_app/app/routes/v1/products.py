@@ -1,14 +1,13 @@
 import logging
 from typing import List
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.controllers.products import create_product, edit_product_info, get_filtered_products, get_product_with_relation
-from app.database.db_models.pizzeria_tables import ProductsModel, ProductsPositionsModel, PositionsModel
+from app.database.db_models.pizzeria_tables import ProductsModel
 from app.dto.products.payload import NewProductPayload, EditProductPayload
-from app.dto.products.schema import ProductSchema, ProductWithRelationSchema, RelatedPosition
+from app.dto.products.schema import ProductSchema, ProductWithRelationSchema
 from app.providers.database import get_async_session
 from app.providers.products import get_product_by_id
 from app.security.jwt_token import check_token
@@ -30,14 +29,14 @@ async def create_new_product(
 @products_router.get("/search", dependencies=[Depends(check_token)], response_model=List[ProductSchema])
 async def get_all_products(
         name: str | None = None,
-        ge_price: int | None = None,
+        sort_by_price: str | None = Query(None, description="Choose from: 'asc' or 'desc'"),
         on_stop_list: bool = False,
         is_active: bool = True,
         db: AsyncSession = Depends(get_async_session),
 ):
     return await get_filtered_products(
         name=name,
-        ge_price=ge_price,
+        sort_by_price=sort_by_price,
         on_stop_list=on_stop_list,
         is_active=is_active,
         db=db,
@@ -62,4 +61,3 @@ async def edit_product(
 async def get_product(product: ProductsModel = Depends(get_product_by_id),
                       db: AsyncSession = Depends(get_async_session)):
     return await get_product_with_relation(db=db, product=product)
-

@@ -1,6 +1,6 @@
-from uuid import UUID
+from typing import List
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database.db_models.pizzeria_tables import ProductsModel, ProductsPositionsModel, PositionsModel
@@ -83,17 +83,19 @@ async def edit_product_info(
 async def get_filtered_products(
         db: AsyncSession,
         name: str,
-        ge_price: int,
+        sort_by_price: str,
         on_stop_list: bool,
         is_active: bool,
 ):
     products_query = select(ProductsModel).where(ProductsModel.is_active == is_active)
     if name:
         products_query = products_query.where(ProductsModel.name.ilike(f"%{name}%"))
-    if ge_price:
-        products_query = products_query.where(ProductsModel.price >= ge_price)
     if isinstance(on_stop_list, bool):
         products_query = products_query.where(ProductsModel.on_stop_list == on_stop_list)
+    if sort_by_price == "asc":
+        products_query = products_query.order_by(asc(ProductsModel.price))
+    if sort_by_price == "desc":
+        products_query = products_query.order_by(desc(ProductsModel.price))
     product = await db.execute(products_query)
     return product.scalars().all()
 
