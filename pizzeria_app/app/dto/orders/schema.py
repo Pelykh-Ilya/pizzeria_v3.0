@@ -1,17 +1,28 @@
 from datetime import datetime
-from typing import Optional
+from typing import List
 from uuid import UUID
 
+from decimal import Decimal
 from pydantic import BaseModel
 
 
-class OrdersSchema(BaseModel):
+class OrderSchema(BaseModel):
     id: UUID
-    customer_id: Optional[UUID]
-    total_price: int
-    status: bool
-    created_at = datetime
-    updated_at = datetime
+    customer_id: UUID | None
+    total_price: Decimal
+    status: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class OrderProductSchema(BaseModel):
+    product_id: UUID
+    quantity: int
+    unit_price: Decimal
+
+
+class OrderWithDetailsSchema(OrderSchema):
+    ordered_products: List[OrderProductSchema]
