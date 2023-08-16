@@ -11,11 +11,11 @@ class OrderProductModel(BaseModel):
 
 
 class NewOrderPayload(BaseModel):
-    customer_id: UUID | None
+    customer_id: UUID | None = None
     ordered_products: List[OrderProductModel]
 
 
 class EditOrderPayload(BaseModel):
-    customer_id: UUID | None
+    customer_id: UUID | None = None
     total_price: Decimal | None = None
     ordered_products: List[OrderProductModel]

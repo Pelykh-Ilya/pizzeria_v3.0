@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 async def get_order_by_id(
         order_id: UUID,
         db: AsyncSession = Depends(get_async_session)
-):
+) -> OrdersModel:
     order_query = await db.execute(
         select(OrdersModel).where(OrdersModel.id == order_id)
     )

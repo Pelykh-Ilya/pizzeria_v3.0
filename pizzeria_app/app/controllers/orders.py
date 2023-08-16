@@ -22,13 +22,6 @@ async def _create_mapping_product_id_price(
     )
     id_price = {product_id: price for product_id, price in zip(product_ids, product_price.all())}
     return id_price
-#
-#
-# async def _create_mapping_product_id_quantity(payload: NewOrderPayload) -> dict:
-#     product_ids = [product.product_id for product in payload.ordered_products]
-#     product_quantity = [product.quantity for product in payload.ordered_products]
-#     id_quantity = {product_id: price for product_id, price in zip(product_ids, product_quantity)}
-#     return id_quantity
 
 
 async def _add_order_details(
@@ -51,40 +44,6 @@ async def _add_order_details(
     await db.commit()
 
 
-# async def _calculate_total_sum(
-#         payload: NewOrderPayload,
-#         db: AsyncSession
-# ) -> Decimal:
-#     id_price = await _create_mapping_product_id_price(payload=payload, db=db)
-#     id_quantity = await _create_mapping_product_id_quantity(payload=payload)
-#     total_sum = 0
-#     for product_id, price in id_price.items():
-#         total_sum += price * id_quantity.get(product_id)
-#     return Decimal(total_sum)
-
-
-# async def _create_mapping_position_id_quantity(
-#         payload: NewOrderPayload,
-#         db: AsyncSession
-# ) -> dict:
-#     id_quantity_product = await _create_mapping_product_id_quantity(payload=payload)
-#     product_ids = [product.product_id for product in payload.ordered_products]
-#     quantity_for_product = await db.execute(
-#         select(ProductsPositionsModel.product_id,
-#                ProductsPositionsModel.position_id,
-#                ProductsPositionsModel.quantity_for_product
-#                ).where(ProductsPositionsModel.product_id.in_(product_ids))
-#     )
-#     need_quantity_of_position_for_product_mapping = {}
-#     results =
-#     for query in :
-#         if need_quantity_of_position_for_product_mapping.get(query[1]):
-#             need_quantity_of_position_for_product_mapping[query[1]] += query[2] * id_quantity_product.get(query[0])
-#         else:
-#             need_quantity_of_position_for_product_mapping[query[1]] = query[2] * id_quantity_product.get(query[0])
-#     return need_quantity_of_position_for_product_mapping
-
-
 async def _prepare_order_details(
         product_info: OrderProductModel,
         db: AsyncSession
@@ -93,7 +52,7 @@ async def _prepare_order_details(
     query = (
         select(
             ProductsPositionsModel.quantity_for_product,
-            PositionsModel.name,
+            PositionsModel.name.label("position_name"),
             PositionsModel.quantity.label("warehouse_quantity"),
             ProductsModel.name.label("product_name"),
             ProductsModel.price
@@ -103,29 +62,50 @@ async def _prepare_order_details(
         .where(ProductsPositionsModel.product_id == product_info.product_id)
         )
     result = (await db.execute(query)).all()
-    for quantity_for_product, name, warehouse_quantity, product_name, price in result:
+    for quantity_for_product, position_name, warehouse_quantity, product_name, price in result:
         if not product_price:
             product_price = price * product_info.quantity
         if (quantity_for_product * product_info.quantity) > warehouse_quantity:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Not enough '{name}' for ordering '{product_name}'"
+                detail=f"Not enough '{position_name}' for ordering '{product_name}'"
             )
     return Decimal(product_price)
 
 
-# async def write_off_positions(
-#         payload: NewOrderPayload,
-#         db: AsyncSession
-# ):
-#     need_quantity_of_position_for_product_mapping = await _create_mapping_position_id_quantity(payload=payload, db=db)
-#     for position_id, quantity in need_quantity_of_position_for_product_mapping.items():
-#         position = await db.scalar(
-#             select(PositionsModel).where(PositionsModel.id == position_id)
-#         )
-#         position -= quantity #
-#         await db.commit()
-#         await db.refresh(position)
+async def _write_off_positions(
+        quantity_for_product: dict,
+        db: AsyncSession
+):
+    for position_id, quantity in quantity_for_product.items():
+        position = await db.scalar(
+            select(PositionsModel).where(PositionsModel.id == position_id)
+        )
+        position.quantity -= quantity
+        await db.commit()
+        await db.refresh(position)
+
+
+async def return_positions(
+        order: OrdersModel,
+        db: AsyncSession,
+):
+    query = (
+        select(
+            ProductsPositionsModel.position_id,
+            OrderDetailsModel.quantity * ProductsPositionsModel.quantity_for_product
+        )
+        .join(ProductsPositionsModel, ProductsPositionsModel.product_id == OrderDetailsModel.product_id)
+        .where(OrderDetailsModel.order_id == order.id)
+    )
+    quantity_for_product = (await db.execute(query)).all()
+    for position_id, quantity in quantity_for_product:
+        position = await db.scalar(
+            select(PositionsModel).where(PositionsModel.id == position_id)
+        )
+        position.quantity += quantity
+        await db.commit()
+        await db.refresh(position)
 
 
 async def get_order_with_detail(order: OrdersModel, db: AsyncSession) -> OrderWithDetailsSchema:
@@ -157,8 +137,19 @@ async def create_order(
         db: AsyncSession
 ) -> OrderWithDetailsSchema:
     total_price = 0
+    quantity_for_product = {}
     for product in payload.ordered_products:
         total_price += await _prepare_order_details(db=db, product_info=product)
+        product_position = (await db.scalars(
+                    select(ProductsPositionsModel).where(ProductsPositionsModel.product_id == product.product_id)
+                )).all()
+        for model in product_position:
+            if quantity_for_product.get(model.position_id):
+                quantity_for_product[model.position_id] += \
+                    (model.quantity_for_product * product.quantity)
+            else:
+                quantity_for_product[model.position_id] = \
+                    (model.quantity_for_product * product.quantity)
     order = OrdersModel(
         customer_id=payload.customer_id,
         total_price=total_price
@@ -167,7 +158,7 @@ async def create_order(
     await db.commit()
     await db.refresh(order)
     await _add_order_details(payload=payload, db=db, order=order)
-    # # списать позиции со слада!
+    await _write_off_positions(quantity_for_product=quantity_for_product, db=db)
     return await get_order_with_detail(order=order, db=db)
 
 
