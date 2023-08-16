@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import List
 from uuid import UUID
 
@@ -6,11 +7,18 @@ from decimal import Decimal
 from pydantic import BaseModel
 
 
+class StatusEnum(str, Enum):
+    NEW = "new"
+    CHANGED = "changed"
+    COMPLETED = "completed"
+    CANCELED = "canceled"
+
+
 class OrderSchema(BaseModel):
     id: UUID
     customer_id: UUID | None
     total_price: Decimal
-    status: str
+    status: StatusEnum
     created_at: datetime
     updated_at: datetime
 

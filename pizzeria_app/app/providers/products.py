@@ -21,7 +21,7 @@ async def get_product_by_id(
     )
     if product := product_query.scalar():
         return product
-    logger.warning("Position with id %s not found", product_id)
+    logger.warning("Product with id %s not found", product_id)
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Product with id {product_id} not found"
