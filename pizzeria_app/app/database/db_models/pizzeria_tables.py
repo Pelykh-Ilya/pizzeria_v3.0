@@ -52,16 +52,11 @@ class OrdersModel(Base):
 
 class OrderDetailsModel(Base):
     __tablename__ = "order_details"
-    id = Column(
-        pg.UUID(True),
-        primary_key=True,
-        default=uuid.uuid4,
-        server_default=func.uuid_generate_v4(),
-    )
-    order_id = Column(pg.UUID(True), ForeignKey("orders.id"))
-    product_id = Column(pg.UUID(True), ForeignKey("products.id"))
+    order_id = Column(pg.UUID(True), ForeignKey("orders.id"), primary_key=True)
+    product_id = Column(pg.UUID(True), ForeignKey("products.id"), primary_key=True)
     quantity = Column(Integer)
     unit_price = Column(NUMERIC)
+    status = Column(VARCHAR(128), nullable=False, default="new", server_default="new")
 
 
 class ProductsModel(Base):

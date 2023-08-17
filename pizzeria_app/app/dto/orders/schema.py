@@ -9,7 +9,6 @@ from pydantic import BaseModel
 
 class StatusEnum(str, Enum):
     NEW = "new"
-    CHANGED = "changed"
     COMPLETED = "completed"
     CANCELED = "canceled"
 

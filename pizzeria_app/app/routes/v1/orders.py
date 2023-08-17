@@ -6,10 +6,13 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.controllers.orders import create_order, get_order_with_detail, get_filtered_order, edit_order_info, \
-    return_positions
+from app.controllers.orders import (create_order,
+                                    get_order_with_detail,
+                                    get_filtered_order,
+                                    cancel_order, complete_order
+                                    )
 from app.database.db_models.pizzeria_tables import OrdersModel
-from app.dto.orders.payload import NewOrderPayload, EditOrderPayload
+from app.dto.orders.payload import NewOrderPayload
 from app.dto.orders.schema import OrderWithDetailsSchema, OrderSchema
 from app.providers.database import get_async_session
 from app.providers.orders import get_order_by_id
@@ -61,15 +64,8 @@ async def change_status_to_completed(
         order: OrdersModel = Depends(get_order_by_id),
         db: AsyncSession = Depends(get_async_session),
 ):
-    if order.status != "canceled":
-        order.status = "completed"
-        await db.commit()
-        await db.refresh(order)
-        return await get_order_with_detail(order=order, db=db)
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail=f"Order with id {order.id} was canceled"
-    )
+    await complete_order(order=order, db=db)
+    return await get_order_with_detail(order=order, db=db)
 
 
 @orders_router.patch(
@@ -81,28 +77,8 @@ async def change_status_to_canceled(
         order: OrdersModel = Depends(get_order_by_id),
         db: AsyncSession = Depends(get_async_session),
 ):
-    order.status = "canceled"
-    await db.commit()
-    await db.refresh(order)
-    await return_positions(order=order, db=db)
+    await cancel_order(order=order, db=db)
     return await get_order_with_detail(order=order, db=db)
-
-
-@orders_router.patch(
-    "/{order_id}",
-    dependencies=[Depends(check_token)],
-    response_model=OrderWithDetailsSchema,
-)
-async def edit_order(
-        payload: EditOrderPayload,
-        order: OrdersModel = Depends(get_order_by_id),
-        db: AsyncSession = Depends(get_async_session),
-):
-    return await edit_order_info(
-        edit_order=payload,
-        order=order,
-        db=db,
-    )
 
 
 @orders_router.get(

@@ -2,13 +2,16 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import HTTPException
-from sqlalchemy import select, asc, desc
+from sqlalchemy import select, asc, desc, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from app.database.db_models.pizzeria_tables import OrdersModel, OrderDetailsModel, ProductsModel, \
-    ProductsPositionsModel, PositionsModel
-from app.dto.orders.payload import NewOrderPayload, EditOrderPayload, OrderProductModel
+from app.database.db_models.pizzeria_tables import (OrdersModel,
+                                                    OrderDetailsModel,
+                                                    ProductsModel,
+                                                    ProductsPositionsModel,
+                                                    PositionsModel)
+from app.dto.orders.payload import NewOrderPayload, OrderProductModel
 from app.dto.orders.schema import OrderWithDetailsSchema, OrderProductSchema
 
 
@@ -86,26 +89,61 @@ async def _write_off_positions(
         await db.refresh(position)
 
 
-async def return_positions(
+async def complete_order(
         order: OrdersModel,
         db: AsyncSession,
 ):
-    query = (
-        select(
-            ProductsPositionsModel.position_id,
-            OrderDetailsModel.quantity * ProductsPositionsModel.quantity_for_product
+    if order.status == "new":
+        order.status = "completed"
+        await db.execute(
+            update(OrderDetailsModel)
+            .where(OrderDetailsModel.order_id == order.id)
+            .values(status="completed")
         )
-        .join(ProductsPositionsModel, ProductsPositionsModel.product_id == OrderDetailsModel.product_id)
-        .where(OrderDetailsModel.order_id == order.id)
-    )
-    quantity_for_product = (await db.execute(query)).all()
-    for position_id, quantity in quantity_for_product:
-        position = await db.scalar(
-            select(PositionsModel).where(PositionsModel.id == position_id)
-        )
-        position.quantity += quantity
         await db.commit()
-        await db.refresh(position)
+        await db.refresh(order)
+    if order.status == "canceled":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Order with id {order.id} was canceled"
+        )
+
+
+async def cancel_order(
+        order: OrdersModel,
+        db: AsyncSession,
+):
+    if order.status == "new":
+        order.status = "canceled"
+        await db.execute(
+            update(OrderDetailsModel)
+            .where(OrderDetailsModel.order_id == order.id)
+            .values(status="canceled")
+        )
+        await db.commit()
+        await db.refresh(order)
+        query = (
+            select(
+                ProductsPositionsModel.position_id,
+                OrderDetailsModel.quantity * ProductsPositionsModel.quantity_for_product
+            )
+            .select_from(OrderDetailsModel)
+            .join(ProductsPositionsModel, ProductsPositionsModel.product_id == OrderDetailsModel.product_id)
+            .where(OrderDetailsModel.order_id == order.id)
+        )
+        quantity_for_product = (await db.execute(query)).all()
+        for position_id, quantity in quantity_for_product:
+            position = await db.scalar(
+                select(PositionsModel).where(PositionsModel.id == position_id)
+            )
+            position.quantity += quantity
+            await db.commit()
+            await db.refresh(position)
+    if order.status == "completed":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Order with id {order.id} was completed"
+        )
 
 
 async def get_order_with_detail(order: OrdersModel, db: AsyncSession) -> OrderWithDetailsSchema:
@@ -176,9 +214,9 @@ async def get_filtered_order(
         orders_query = orders_query.where(OrdersModel.status == order_status)
     if product_in_order:
         orders_query = orders_query.where(OrdersModel.id.in_(
-            select(OrderDetailsModel.order_id).join(
-                ProductsModel, ProductsModel.id == OrderDetailsModel.product_id
-            ).where(ProductsModel.name.ilike(f"%{product_in_order}%"))
+            select(OrderDetailsModel.order_id)
+            .join(ProductsModel, ProductsModel.id == OrderDetailsModel.product_id)
+            .where(ProductsModel.name.ilike(f"%{product_in_order}%"))
         ))
     if sort_by_price == "asc":
         orders_query = orders_query.order_by(asc(OrdersModel.total_price))
@@ -186,26 +224,3 @@ async def get_filtered_order(
         orders_query = orders_query.order_by(desc(OrdersModel.total_price))
     orders = await db.execute(orders_query)
     return orders.scalars().all()
-
-
-async def edit_order_info(
-        edit_order: EditOrderPayload,
-        order: OrdersModel,
-        db: AsyncSession,
-) -> OrderWithDetailsSchema:
-    is_updated = False
-    if edit_order.customer_id and edit_order.customer_id != order.customer_id:
-        order.customer_id = edit_order.customer_id
-        is_updated = True
-    if edit_order.total_price and edit_order.total_price != order.total_price:
-        order.total_price = edit_order.total_price
-        is_updated = True
-    if edit_order.ordered_products:
-        # сравнить списки и если есть различия сохранить изменения в order_details
-        # убрать/добавить количество ингридиентов
-        pass
-    if is_updated:
-        order.status = "changed"
-        await db.commit()
-        await db.refresh(order)
-    return await get_order_with_detail(order=order, db=db)
